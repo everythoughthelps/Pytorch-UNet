@@ -1,14 +1,22 @@
+import os
 import random
+
+import h5py as h5py
 import numpy as np
+from PIL import Image
+import cv2
+import matplotlib.image as imgplt
+import matplotlib.pyplot as plt
 
 
 def get_square(img, pos):
     """Extract a left or a right square from ndarray shape : (H, W, C))"""
     h = img.shape[0]
     if pos == 0:
-        return img[:, :h]
+        return img[:, :]
     else:
-        return img[:, -h:]
+        x = img[:,:]
+        return x
 
 def split_img_into_squares(img):
     return get_square(img, 0), get_square(img, 1)
@@ -76,3 +84,86 @@ def rle_encode(mask_image):
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
     runs[1::2] = runs[1::2] - runs[:-1:2]
     return runs
+
+
+
+
+def ImageToMatrix():
+    # 读取图片
+    path = '/home/panmeng/data/nyu_depths/4.png'
+    #path = '/home/panmeng/data/sceneflow/driving__disparity/15mm_focallength/scene_backwards/fast/left/0001.pfm'
+    #im = Image.open(path)
+    #image_arr = np.array(im)
+    #print(image_arr)
+
+    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    print("图像的形状,返回一个图像的(行数,列数,通道数):", img.shape)
+    print("图像的像素数目:", img.size)
+    print("图像的数据类型:", img.dtype)
+    image_arr = np.array(img)
+    print(image_arr)
+    with open('pixel.txt','w') as f:
+        f.write(str(image_arr))
+    #img = imgplt.imread(path)
+    #plt.imshow(img)
+    #plt.savefig('grayimg')
+    #plt.show()
+def extractNYU(path):
+    f = h5py.File(path)
+    print(f,type(f))
+    images = f['images']
+    print(images,type(images))
+    images = np.array(images)
+
+    path_converted = '/home/panmeng/data/'
+    if not os.path.isdir(path_converted):
+        os.makedirs(path_converted)
+
+    images_number = []
+    for i in range(len(images)):
+        print(i)
+        images_number.append(images[i])
+        a = np.array(images_number[i])
+        #    print len(img)
+        # img=img.reshape(3,480,640)
+        #   print img.shape
+        r = Image.fromarray(a[0]).convert('L')
+        g = Image.fromarray(a[1]).convert('L')
+        b = Image.fromarray(a[2]).convert('L')
+        img = Image.merge("RGB", (r, g, b))
+        img = img.transpose(Image.ROTATE_270)
+        plt.imshow(img)
+        plt.axis('off')
+        plt.show()
+        #os.mkdir('/home/panmeng/data/nyu_images')
+        iconpath = '/home/panmeng/data/nyu_images/' + str(i) + '.png'
+        img.save(iconpath, optimize=True)
+def extract_depths_NYU(path):
+    f = h5py.File(path)
+    print(f, type(f))
+    depths = f['depths']
+    depths = np.array(depths)
+    path_converted = '/home/panmeng/data/nyu_depths/'
+    if not os.path.isdir(path_converted):
+        os.makedirs(path_converted)
+
+    max = depths.max()
+    print(depths.shape)
+    print(depths.max())
+    print(depths.min())
+
+    depths = depths / max * 255
+    depths = depths.transpose((0, 2, 1))
+    print(depths.max())
+    print(depths.min())
+
+    for i in range(len(depths)):
+        print(str(i) + '.png')
+        depths_img = Image.fromarray(np.uint8(depths[i]))
+        depths_img = depths_img.transpose(Image.FLIP_LEFT_RIGHT)
+
+        iconpath = path_converted + str(i) + '.png'
+        depths_img.save(iconpath, 'PNG', optimize=True)
+    pass
+if __name__ == '__main__':
+   ImageToMatrix()
