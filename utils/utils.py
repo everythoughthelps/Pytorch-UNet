@@ -15,8 +15,7 @@ def get_square(img, pos):
     if pos == 0:
         return img[:, :]
     else:
-        x = img[:,:]
-        return x
+        return img[:,:]
 
 def split_img_into_squares(img):
     return get_square(img, 0), get_square(img, 1)
