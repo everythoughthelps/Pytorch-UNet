@@ -7,7 +7,6 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 from torch import optim
-from matplotlib import pyplot as plt
 from torch.optim.lr_scheduler import StepLR
 
 from eval import eval_net
@@ -20,14 +19,13 @@ def train_net(net,
               epochs=5,
               batch_size=1,
               lr=0.1,
-              val_percent=0.05,
+              val_percent=0.05,best_threshold_val_RMSE = 100,
               save_cp=True,
-              gpu=True,
-              img_scale=1):
+              gpu=True):
 
     global i, masks_pred, true_masks
-    dir_img = '/home/panmeng/data/nyu_images/'
-    dir_mask = '/home/panmeng/data/nyu_depths/'
+    dir_img = '/home/wsco/data/nyu_images/'
+    dir_mask = '/home/wsco/data/nyu_depths/'
     dir_checkpoint = 'checkpoints/'
     print(lr)
     ids = get_ids(dir_img)
@@ -62,11 +60,12 @@ def train_net(net,
     x_list = []
     y_crossentropy_list = []
     y_RMSE_list = []
+
     for epoch in range(epochs):
 
         print('Starting epoch {}/{}.'.format(epoch + 1, epochs))
         net.train()
-        print(lr)
+        print(scheduler.get_lr())
         # reset the generators
         train =get_imgs_and_masks(iddataset['train'], dir_img, dir_mask,scale=1)
         val = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
@@ -79,12 +78,9 @@ def train_net(net,
             imgs = torch.from_numpy(imgs)
             true_masks = torch.from_numpy(true_masks)
             imgs = imgs.cuda()
-            true_masks = true_masks.cuda()
+            true_masks = true_masks.cuda().long()
 
             masks_pred = net(imgs)
-
-            print(masks_pred.size(),masks_pred.dtype)
-            print(true_masks.size(),true_masks.dtype)
 
             loss = criterion(masks_pred, true_masks)
             epoch_loss += loss.item()
@@ -95,36 +91,32 @@ def train_net(net,
             loss.backward()
             optimizer.step()
             scheduler.step()
-            break
 
-
-        print('Epoch finished ! Loss: {}'.format(epoch_loss / i))
+        print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
 
         with open('train_log.txt','a') as f:
-            f.write(str(epoch_loss /i) +'\n')
+            f.write(str(epoch_loss /(i+1)) +'\n')
 
         x_list.append(epoch)
-        y_crossentropy_list.append(str(epoch_loss/i)+'\n')
+        y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
         del true_masks,masks_pred
 
-        print(val,type(val))
-
-        val_MSE= eval_net(net, val, gpu)
-        val_RMSE= torch.sqrt(val_MSE)
-        print('Validation crossentropy: {}'.format(val_RMSE))
+        val_RMSE= eval_net(net, val,epoch,best_threshold_val_RMSE, gpu=True)
+        print('Validation RMSE: {}'.format(val_RMSE))
 
         with open('val_log.txt','a') as f:
             f.write(str(val_RMSE) +'\n')
         y_RMSE_list.append(str(val_RMSE)+'\n')
 
-        if save_cp:
+        if val_RMSE < best_threshold_val_RMSE:
+            best_threshold_val_RMSE = val_RMSE
+            if not os.path.exists('checkpoints'):
+                os.mkdir('checkpoints')
             torch.save(net.state_dict(),
                        dir_checkpoint + 'CP{}.pth'.format(epoch + 1))
             print('Checkpoint {} saved !'.format(epoch + 1))
-    with open('log1.txt','w') as f:
-        f.write(str(y_crossentropy_list))
-        f.write(str(y_RMSE_list))
+
     #plt.title('300 epoch train loss and validate coeff')
     #plt.ylabel('accuracy')
     #plt.xlabel('epoch')
@@ -139,16 +131,14 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=0.2,
+    parser.add_option('-l', '--learning-rate', dest='lr', default=10,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
     parser.add_option('-c', '--load', dest='load',
                       default=False, help='load file model')#'/home/panmeng/PycharmProjects/pt1.1/unet/checkpoints/CP1.pth'
-    parser.add_option('-s', '--scale', dest='scale', type='float',
-                      default=0.5, help='downscaling factor of the images')
 
     (options, args) = parser.parse_args()
     return options
@@ -171,8 +161,7 @@ if __name__ == '__main__':
                   epochs=args.epochs,
                   batch_size=args.batchsize,
                   lr=args.lr,
-                  gpu=args.gpu,
-                  img_scale=args.scale)
+                  gpu=args.gpu)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         print('Saved interrupt')
