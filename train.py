@@ -14,7 +14,7 @@ from unet.unet_model import UNet
 from utils import get_ids, split_train_val, get_imgs_and_masks, batch
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-gpus = [0,1]
+gpus = [0]
 def train_net(net,
               epochs=5,
               batch_size=1,
@@ -24,8 +24,8 @@ def train_net(net,
               gpu=True):
 
     global i, masks_pred, true_masks
-    dir_img = '/home/wsco/data/nyu_images/'
-    dir_mask = '/home/wsco/data/nyu_depths/'
+    dir_img = '/home/panmeng/data/dir/nyu_images/'
+    dir_mask = '/home/panmeng/data/dir/nyu_depths/'
     dir_checkpoint = 'checkpoints/'
     print(lr)
     ids = get_ids(dir_img)
@@ -131,7 +131,7 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
     parser.add_option('-l', '--learning-rate', dest='lr', default=0.1,
                       type='float', help='learning rate')
