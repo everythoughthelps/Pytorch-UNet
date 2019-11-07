@@ -14,7 +14,7 @@ from unet.unet_model import UNet
 from utils import get_ids, split_train_val, get_imgs_and_masks, batch
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-gpus = [0]
+gpus = [0,1]
 def train_net(net,
               epochs=5,
               batch_size=1,
