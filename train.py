@@ -54,7 +54,7 @@ def train_net(net,
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = StepLR(optimizer,step_size=10,gamma=0.1)
+#    scheduler = StepLR(optimizer,step_size=10,gamma=0.1)
     criterion = nn.CrossEntropyLoss()
     #criterion2 = nn.MSELoss()
     x_list = []
@@ -64,8 +64,8 @@ def train_net(net,
     for epoch in range(epochs):
 
         print('Starting epoch {}/{}.'.format(epoch + 1, epochs))
+#        print(scheduler.get_lr)
         net.train()
-        print(scheduler.get_lr())
         # reset the generators
         train =get_imgs_and_masks(iddataset['train'], dir_img, dir_mask,scale=1)
         val = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
@@ -90,7 +90,7 @@ def train_net(net,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            scheduler.step()
+#            scheduler.step()
 
         print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
 
@@ -133,7 +133,7 @@ def get_args():
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=10,
+    parser.add_option('-l', '--learning-rate', dest='lr', default=0.1,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
