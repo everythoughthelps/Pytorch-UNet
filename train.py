@@ -24,8 +24,8 @@ def train_net(net,
               gpu=True):
 
     global i, masks_pred, true_masks
-    dir_img = '/home/panmeng/data/dir/nyu_images/'
-    dir_mask = '/home/panmeng/data/dir/nyu_depths/'
+    dir_img = '/home/panmeng/data/nyu_images/dir/'
+    dir_mask = '/home/panmeng/data/nyu_depths/dir/'
     dir_checkpoint = 'checkpoints/'
     print(lr)
     ids = get_ids(dir_img)
@@ -54,7 +54,7 @@ def train_net(net,
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-#    scheduler = StepLR(optimizer,step_size=10,gamma=0.1)
+    scheduler = StepLR(optimizer,step_size=10,gamma=0.1)
     criterion = nn.CrossEntropyLoss()
     #criterion2 = nn.MSELoss()
     x_list = []
@@ -64,11 +64,13 @@ def train_net(net,
     for epoch in range(epochs):
 
         print('Starting epoch {}/{}.'.format(epoch + 1, epochs))
-#        print(scheduler.get_lr)
+        print(scheduler.get_lr())
         net.train()
         # reset the generators
         train =get_imgs_and_masks(iddataset['train'], dir_img, dir_mask,scale=1)
         val = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
+        val_save = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
+
 
         epoch_loss = 0
         for i, b in enumerate(batch(train, batch_size)):
@@ -90,7 +92,8 @@ def train_net(net,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-#            scheduler.step()
+            break
+        scheduler.step()
 
         print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
 
@@ -102,7 +105,7 @@ def train_net(net,
 
         del true_masks,masks_pred
 
-        val_RMSE= eval_net(net, val,epoch,best_threshold_val_RMSE, gpu=True)
+        val_RMSE= eval_net(net, val,val_save,epoch,best_threshold_val_RMSE, gpu=True)
         print('Validation RMSE: {}'.format(val_RMSE))
 
         with open('val_log.txt','a') as f:
@@ -156,16 +159,14 @@ if __name__ == '__main__':
     print(torch.cuda.is_available())
         # cudnn.benchmark = True # faster convolutions, but more memory
 
+
+    train_net(net=net,
+              epochs=args.epochs,
+              batch_size=args.batchsize,
+              lr=args.lr,
+              gpu=args.gpu)
+
     try:
-        train_net(net=net,
-                  epochs=args.epochs,
-                  batch_size=args.batchsize,
-                  lr=args.lr,
-                  gpu=args.gpu)
-    except KeyboardInterrupt:
-        torch.save(net.state_dict(), 'INTERRUPTED.pth')
-        print('Saved interrupt')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+        sys.exit(0)
+    except SystemExit:
+        os._exit(0)
