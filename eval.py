@@ -3,16 +3,15 @@ import torch
 from torch import nn
 from torchvision.transforms import ToPILImage
 
-def eval_net(net, dataset,dataset4save, epochs,best_threshold_val_rmse, gpu=True):
+def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
     global i, val_rmse
     net.eval()
     tot = 0
     for i, b in enumerate(dataset):
         img = b[0]
+        img = img.float()
         true_mask = b[1]
-
-        img = torch.from_numpy(img).unsqueeze(0)
-        true_mask = torch.from_numpy(true_mask).unsqueeze(0)
+        true_mask = true_mask.float()
 
         if gpu:
             img = img.cuda()
@@ -33,16 +32,14 @@ def eval_net(net, dataset,dataset4save, epochs,best_threshold_val_rmse, gpu=True
     if epochs % 20 ==0 or val_rmse == best_threshold_val_rmse:
         print('save results')
 
-        for j,m in enumerate(dataset4save):
+        for j,m in enumerate(dataset):
             img = m[0]
-
-            img = torch.from_numpy(img).unsqueeze(0)
+            img = img.float()
 
             if gpu:
                 img = img.cuda()
 
             pred = net(img)
-            print(pred.size())
             probability, mask_pred = torch.max(pred, dim=1)
 
             imgs = ToPILImage()(mask_pred.float().cpu())
@@ -52,5 +49,4 @@ def eval_net(net, dataset,dataset4save, epochs,best_threshold_val_rmse, gpu=True
             if not os.path.exists('results/'+str(epochs)+'epochs_results'):
                 os.mkdir('results/'+str(epochs)+'epochs_results')
             imgs.save(os.getcwd()+'/results/'+str(epochs)+'epochs_results/'+str(j)+'.png')
-            print(j,'results')
     return val_rmse

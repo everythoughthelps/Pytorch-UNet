@@ -1,55 +1,51 @@
 import sys
 import os
 from optparse import OptionParser
-import numpy as np
 import logging
 import torch
-import torch.backends.cudnn as cudnn
 import torch.nn as nn
+from utils.NYU_dataloader import nyudataset
+from torch.utils.data import DataLoader
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
 
 from eval import eval_net
 from unet.unet_model import UNet
-from utils import get_ids, split_train_val, get_imgs_and_masks, batch
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 gpus = [0]
 def train_net(net,
               epochs=5,
-              batch_size=1,
               lr=0.1,
-              val_percent=0.05,best_threshold_val_RMSE = 100,
+              best_threshold_val_RMSE = 100,
               save_cp=True,
               gpu=True):
 
-    global i, masks_pred, true_masks
-    dir_img = '/home/panmeng/data/nyu_images/dir/'
-    dir_mask = '/home/panmeng/data/nyu_depths/dir/'
     dir_checkpoint = 'checkpoints/'
-    print(lr)
-    ids = get_ids(dir_img)
-
-    iddataset = split_train_val(ids, val_percent)
-    print(iddataset)
-    print(type(iddataset))
-    print(iddataset['train'])
-    print(iddataset['val'])
+    global i, masks_pred, true_masks
+    dir_img = '/home/panmeng/data/nyu_images'
+    dir_mask = '/home/panmeng/data/nyu_images'
+    val_img_dir = '/home/panmeng/data/nyu_images/dir/'
+    val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
+    train_dataset = nyudataset(dir_img,dir_mask,0.1)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,0.1)
+    train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=False)
+    test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
     print('''
     Starting training:
         Epochs: {}
-        Batch size: {}
         Learning rate: {}
         Training size: {}
         Validation size: {}
         Checkpoints: {}
         CUDA: {}
-    '''.format(epochs, batch_size, lr, len(iddataset['train']),
-               len(iddataset['val']), str(save_cp), str(gpu)))
+    '''.format(epochs,lr, len(train_dataset),
+               len(val_dataset), str(save_cp), str(gpu)))
 
-    N_train = len(iddataset['train'])
-    print(N_train)
+    N_train = len(train_dataloader)
+    print(len(train_dataset))
+    print(len(val_dataset))
     optimizer = optim.SGD(net.parameters(),
                           lr=lr,
                           momentum=0.9,
@@ -66,19 +62,14 @@ def train_net(net,
         print('Starting epoch {}/{}.'.format(epoch + 1, epochs))
         print(scheduler.get_lr())
         net.train()
-        # reset the generators
-        train =get_imgs_and_masks(iddataset['train'], dir_img, dir_mask,scale=1)
-        val = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
-        val_save = get_imgs_and_masks(iddataset['val'], dir_img, dir_mask,scale=1)
-
 
         epoch_loss = 0
-        for i, b in enumerate(batch(train, batch_size)):
-            imgs = np.array([i[0] for i in b]).astype(np.float32)
-            true_masks = np.array([i[1] for i in b]).astype(np.float32)
+        for i, b in enumerate(train_dataloader):
+            imgs = b[0]
+            imgs = imgs.float()
+            true_masks = b[1]
+            true_masks = true_masks.float()
 
-            imgs = torch.from_numpy(imgs)
-            true_masks = torch.from_numpy(true_masks)
             imgs = imgs.cuda()
             true_masks = true_masks.cuda().long()
 
@@ -87,12 +78,11 @@ def train_net(net,
             loss = criterion(masks_pred, true_masks)
             epoch_loss += loss.item()
 
-            print('{0:.4f} --- loss: {1:.6f}'.format(i * batch_size / N_train, loss.item()))
+            print('{0:.4f} --- loss: {1:.6f}'.format(i * train_dataloader.batch_size/ N_train, loss.item()))
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            break
         scheduler.step()
 
         print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
@@ -105,7 +95,7 @@ def train_net(net,
 
         del true_masks,masks_pred
 
-        val_RMSE= eval_net(net, val,val_save,epoch,best_threshold_val_RMSE, gpu=True)
+        val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
         print('Validation RMSE: {}'.format(val_RMSE))
 
         with open('val_log.txt','a') as f:
@@ -120,16 +110,6 @@ def train_net(net,
                        dir_checkpoint + 'CP{}.pth'.format(epoch + 1))
             print('Checkpoint {} saved !'.format(epoch + 1))
 
-    #plt.title('300 epoch train loss and validate coeff')
-    #plt.ylabel('accuracy')
-    #plt.xlabel('epoch')
-    #plt.plot(x_list, y_loss_list,label='train loss',color='green')
-    #plt.plot(x_list,y_coeff_list,label='val coeff',color='red')
-    #plt.savefig("300 epoch train loss and validate coeff")
-    #plt.show()
-
-
-
 def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
@@ -142,7 +122,6 @@ def get_args():
                       default=True, help='use cuda')
     parser.add_option('-c', '--load', dest='load',
                       default=False, help='load file model')#'/home/panmeng/PycharmProjects/pt1.1/unet/checkpoints/CP1.pth'
-
     (options, args) = parser.parse_args()
     return options
 
@@ -162,7 +141,6 @@ if __name__ == '__main__':
 
     train_net(net=net,
               epochs=args.epochs,
-              batch_size=args.batchsize,
               lr=args.lr,
               gpu=args.gpu)
 
