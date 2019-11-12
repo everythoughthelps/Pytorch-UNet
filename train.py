@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 from optparse import OptionParser
 import logging
 import torch
@@ -57,6 +58,7 @@ def train_net(net,
     y_crossentropy_list = []
     y_RMSE_list = []
 
+
     for epoch in range(epochs):
 
         print('Starting epoch {}/{}.'.format(epoch + 1, epochs))
@@ -64,7 +66,9 @@ def train_net(net,
         net.train()
 
         epoch_loss = 0
+        start_time = time.time()
         for i, b in enumerate(train_dataloader):
+
             imgs = b[0]
             imgs = imgs.float()
             mask_sparse = b[1]
@@ -82,9 +86,11 @@ def train_net(net,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        print('time',(time.time()-start_time)/60)
         scheduler.step()
 
         print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
+
 
         with open('train_log.txt','a') as f:
             f.write(str(epoch_loss /(i+1)) +'\n')
