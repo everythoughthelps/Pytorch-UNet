@@ -7,7 +7,7 @@ import torch.nn as nn
 from utils.NYU_dataloader import nyudataset
 from torch.utils.data import DataLoader
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import MultiStepLR
 
 from eval import eval_net
 from unet.unet_model import UNet
@@ -22,15 +22,15 @@ def train_net(net,
               gpu=True):
 
     dir_checkpoint = 'checkpoints/'
-    global i, masks_pred, true_masks
+    global i, masks_pred, mask_sparse
     dir_img = '/home/panmeng/data/nyu_images'
     dir_mask = '/home/panmeng/data/nyu_images'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,0.1)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,0.1)
-    train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=False)
-    test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
+    train_dataset = nyudataset(dir_img,dir_mask,0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,0.5)
+    train_dataloader = DataLoader(train_dataset,batch_size=5,shuffle=False)
+    test_dataloader = DataLoader(val_dataset,batch_size=5,shuffle=False)
 
     print('''
     Starting training:
@@ -50,7 +50,7 @@ def train_net(net,
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = StepLR(optimizer,step_size=10,gamma=0.1)
+    scheduler = MultiStepLR(optimizer,[10,90,190],gamma=0.1)
     criterion = nn.CrossEntropyLoss()
     #criterion2 = nn.MSELoss()
     x_list = []
@@ -67,18 +67,17 @@ def train_net(net,
         for i, b in enumerate(train_dataloader):
             imgs = b[0]
             imgs = imgs.float()
-            true_masks = b[1]
-            true_masks = true_masks.float()
+            mask_sparse = b[1]
+            mask_sparse = mask_sparse.float()
 
             imgs = imgs.cuda()
-            true_masks = true_masks.cuda().long()
+            mask_sparse = mask_sparse.cuda().long()
 
             masks_pred = net(imgs)
-
-            loss = criterion(masks_pred, true_masks)
+            loss = criterion(masks_pred, mask_sparse)
             epoch_loss += loss.item()
 
-            print('{0:.4f} --- loss: {1:.6f}'.format(i * train_dataloader.batch_size/ N_train, loss.item()))
+            print('{0:.4f} --- loss: {1:.6f}'.format(i / N_train, loss.item()))
 
             optimizer.zero_grad()
             loss.backward()
@@ -93,7 +92,7 @@ def train_net(net,
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        del true_masks,masks_pred
+        del mask_sparse,masks_pred
 
         val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
         print('Validation RMSE: {}'.format(val_RMSE))
@@ -114,7 +113,7 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
                       type='int', help='batch size')
     parser.add_option('-l', '--learning-rate', dest='lr', default=0.1,
                       type='float', help='learning rate')
@@ -128,7 +127,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    net = UNet(n_channels=3, n_classes=256)
+    net = UNet(n_channels=3, n_classes=64)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))

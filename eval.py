@@ -18,10 +18,13 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
             true_mask = true_mask.cuda()
 
         pred = net(img)
-        probability,mask_pred= torch.max(pred,dim=1)
-        mask_pred = mask_pred.float()
+        probability,mask_pred_sparse= torch.max(pred,dim=1)
+        mask_pred_sparse = mask_pred_sparse.float()
+        mask_pred_sparse = mask_pred_sparse * 4
+        print('mask_sparse',mask_pred_sparse)
+
         loss = nn.MSELoss()
-        tot += loss(mask_pred,true_mask)
+        tot += loss(mask_pred_sparse,true_mask)
 
     val_mse = tot /(i + 1)
     val_rmse = torch.sqrt(val_mse)
@@ -40,9 +43,9 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
                 img = img.cuda()
 
             pred = net(img)
-            probability, mask_pred = torch.max(pred, dim=1)
+            probability, mask_pred_sparse = torch.max(pred, dim=1)
 
-            imgs = ToPILImage()(mask_pred.float().cpu())
+            imgs = ToPILImage()(mask_pred_sparse.float().cpu())
 
             if not os.path.exists('results'):
                 os.mkdir('results')

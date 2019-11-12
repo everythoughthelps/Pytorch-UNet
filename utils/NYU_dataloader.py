@@ -39,7 +39,12 @@ class nyudataset(Dataset):
 			modified_w,modified_h =int(original_w*self.scale),int(original_h*self.scale)
 			image = transforms.Resize((modified_h,modified_w))(image)
 			mask = transforms.Resize((modified_h,modified_w))(mask)
-			image = np.asarray(image)
+			image = np.array(image)
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
-			mask = np.asarray(np.array(mask))
-			return image, mask
+			mask = np.array(mask)
+			mask_dense = mask
+
+			mask = mask * 0.25
+			mask = np.floor(mask)
+			mask_sparse = mask
+			return image, mask_sparse, mask_dense
