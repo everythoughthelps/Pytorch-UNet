@@ -20,8 +20,8 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
         pred = net(img)
         probability,mask_pred_sparse= torch.max(pred,dim=1)
         mask_pred_sparse = mask_pred_sparse.float()
-        mask_pred_sparse = mask_pred_sparse * 4
-        true_mask = true_mask * 4
+        mask_pred_sparse = mask_pred_sparse * 16
+        true_mask = true_mask * 16
 
         loss = nn.MSELoss()
         tot += loss(mask_pred_sparse,true_mask)
@@ -45,7 +45,7 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
             pred = net(img)
             probability, mask_pred_sparse = torch.max(pred, dim=1)
 
-            imgs = ToPILImage()(mask_pred_sparse.float().cpu())
+            imgs = ToPILImage()(mask_pred_sparse.float().cpu() * 16)
 
             if not os.path.exists('results'):
                 os.mkdir('results')

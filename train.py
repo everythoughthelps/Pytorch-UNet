@@ -17,6 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 gpus = [0]
 def train_net(net,
               epochs=5,
+              batchsize=5,
               lr=0.1,
               best_threshold_val_RMSE = 100,
               save_cp=True,
@@ -28,9 +29,9 @@ def train_net(net,
     dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,0.5)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,0.5)
-    train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=False)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
+    train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
     print('''
@@ -45,8 +46,6 @@ def train_net(net,
                len(val_dataset), str(save_cp), str(gpu)))
 
     N_train = len(train_dataloader)
-    print(len(train_dataset))
-    print(len(val_dataset))
     optimizer = optim.SGD(net.parameters(),
                           lr=lr,
                           momentum=0.9,
@@ -119,7 +118,7 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=5,
                       type='int', help='batch size')
     parser.add_option('-l', '--learning-rate', dest='lr', default=1,
                       type='float', help='learning rate')
@@ -133,7 +132,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    net = UNet(n_channels=3, n_classes=64)
+    net = UNet(n_channels=3, n_classes=16)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))
@@ -146,6 +145,7 @@ if __name__ == '__main__':
 
     train_net(net=net,
               epochs=args.epochs,
+              batchsize=args.batchsize,
               lr=args.lr,
               gpu=args.gpu)
 

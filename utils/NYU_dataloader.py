@@ -44,7 +44,7 @@ class nyudataset(Dataset):
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
 			mask = np.array(mask)
 
-			mask = mask * 0.25
+			mask = mask / 16
 			mask = np.floor(mask)
 			mask_sparse = mask
 			return image, mask_sparse
