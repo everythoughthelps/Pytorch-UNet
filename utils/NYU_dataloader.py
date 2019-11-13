@@ -22,8 +22,9 @@ class nyudataset(Dataset):
 			if 'png' in id:
 				mask = os.path.join(self.mask_dir,str(id))
 				self.masks.append(mask)
-		print(self.images_name)
-		print(self.masks_name)
+		print(self.images)
+		print(self.masks)
+
 	def __len__(self):
 		return len(self.images)
 
@@ -42,9 +43,8 @@ class nyudataset(Dataset):
 			image = np.array(image)
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
 			mask = np.array(mask)
-			mask_dense = mask
 
 			mask = mask * 0.25
 			mask = np.floor(mask)
 			mask_sparse = mask
-			return image, mask_sparse, mask_dense
+			return image, mask_sparse

@@ -25,13 +25,13 @@ def train_net(net,
     dir_checkpoint = 'checkpoints/'
     global i, masks_pred, mask_sparse
     dir_img = '/home/panmeng/data/nyu_images'
-    dir_mask = '/home/panmeng/data/nyu_images'
+    dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
     train_dataset = nyudataset(dir_img,dir_mask,0.5)
     val_dataset = nyudataset(val_img_dir,val_mask_dir,0.5)
-    train_dataloader = DataLoader(train_dataset,batch_size=5,shuffle=False)
-    test_dataloader = DataLoader(val_dataset,batch_size=5,shuffle=False)
+    train_dataloader = DataLoader(train_dataset,batch_size=1,shuffle=False)
+    test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
     print('''
     Starting training:
@@ -121,7 +121,7 @@ def get_args():
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=6,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=0.1,
+    parser.add_option('-l', '--learning-rate', dest='lr', default=1,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
