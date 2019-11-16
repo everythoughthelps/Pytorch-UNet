@@ -21,16 +21,16 @@ class UNet(nn.Module):
 
         self.inc = inconv(n_channels, 64)
         self.down1 = nn.Sequential(rn.BasicBlock(64,64),
-                rn.BasicBlock(64,128,stride=2,downsample = nn.Sequential(rn.conv1x1(64,128, stride=2),
+                rn.BasicBlock(64,128,stride=2,downsample = nn.Sequential(nn.Conv2d(64,128, 1,stride=2),
                 nn.BatchNorm2d(128))))
         self.down2 = nn.Sequential(rn.BasicBlock(128,128),
-                rn.BasicBlock(128,256,stride=2,downsample = nn.Sequential(rn.conv1x1(128,256, stride=2),
+                rn.BasicBlock(128,256,stride=2,downsample = nn.Sequential(nn.Conv2d(128,256, 1,stride=2),
                 nn.BatchNorm2d(256))))
         self.down3 = nn.Sequential(rn.BasicBlock(256,256),
-                rn.BasicBlock(256,512,stride=2,downsample = nn.Sequential(rn.conv1x1(256,512, stride=2),
+                rn.BasicBlock(256,512,stride=2,downsample = nn.Sequential(nn.Conv2d(256,512, 1,stride=2),
                 nn.BatchNorm2d(512))))
         self.down4 = nn.Sequential(rn.BasicBlock(512,512),
-                rn.BasicBlock(512,512,stride=2,downsample = nn.Sequential(rn.conv1x1(512,512, stride=2),
+                rn.BasicBlock(512,512,stride=2,downsample = nn.Sequential(nn.Conv2d(512,512, 1,stride=2),
                 nn.BatchNorm2d(512))))
         self.up1 = up(1024, 256)
         self.up2 = up(512, 128)
