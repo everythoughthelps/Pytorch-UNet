@@ -1,17 +1,37 @@
 # full assembly of the sub-parts to form the complete net
 
-import torch.nn.functional as F
+from torchvision.models import  resnet as rn
 
 from .unet_parts import *
 
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes):
         super(UNet, self).__init__()
+        #self.inc = inconv(n_channels, 64)
+        #self.down1 = down(64, 128)
+        #self.down2 = down(128, 256)
+        #self.down3 = down(256, 512)
+        #self.down4 = down(512, 512)
+        #self.up1 = up(1024, 256)
+        #self.up2 = up(512, 128)
+        #self.up3 = up(256, 64)
+        #self.up4 = up(128, 64)
+        #self.outc = outconv(64, n_classes)
+
+
         self.inc = inconv(n_channels, 64)
-        self.down1 = down(64, 128)
-        self.down2 = down(128, 256)
-        self.down3 = down(256, 512)
-        self.down4 = down(512, 512)
+        self.down1 = nn.Sequential(rn.BasicBlock(64,64),
+                rn.BasicBlock(64,128,stride=2,downsample = nn.Sequential(rn.conv1x1(64,128, stride=2),
+                nn.BatchNorm2d(128))))
+        self.down2 = nn.Sequential(rn.BasicBlock(128,128),
+                rn.BasicBlock(128,256,stride=2,downsample = nn.Sequential(rn.conv1x1(128,256, stride=2),
+                nn.BatchNorm2d(256))))
+        self.down3 = nn.Sequential(rn.BasicBlock(256,256),
+                rn.BasicBlock(256,512,stride=2,downsample = nn.Sequential(rn.conv1x1(256,512, stride=2),
+                nn.BatchNorm2d(512))))
+        self.down4 = nn.Sequential(rn.BasicBlock(512,512),
+                rn.BasicBlock(512,512,stride=2,downsample = nn.Sequential(rn.conv1x1(512,512, stride=2),
+                nn.BatchNorm2d(512))))
         self.up1 = up(1024, 256)
         self.up2 = up(512, 128)
         self.up3 = up(256, 64)

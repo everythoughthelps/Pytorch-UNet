@@ -29,8 +29,8 @@ def train_net(net,
     dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.1)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.1)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -50,7 +50,7 @@ def train_net(net,
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = MultiStepLR(optimizer,[10,90,190],gamma=0.1)
+    scheduler = MultiStepLR(optimizer,[10,190],gamma=0.1)
     criterion = nn.CrossEntropyLoss()
     #criterion2 = nn.MSELoss()
     x_list = []
@@ -118,7 +118,7 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=5,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=30,
                       type='int', help='batch size')
     parser.add_option('-l', '--learning-rate', dest='lr', default=1,
                       type='float', help='learning rate')
@@ -132,7 +132,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    net = UNet(n_channels=3, n_classes=16)
+    net = UNet(n_channels=3, n_classes=64)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))
