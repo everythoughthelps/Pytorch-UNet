@@ -2,6 +2,7 @@ import os
 import torch
 from torch import nn
 from torchvision.transforms import ToPILImage
+import numpy as np
 
 def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
     global i, val_rmse
@@ -18,7 +19,7 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
             true_mask = true_mask.cuda()
 
         pred = net(img)
-        probability,mask_pred_sparse= torch.max(pred,dim=1)
+        probability,mask_pred_sparse= torch.max(pred,1)
         mask_pred_sparse = mask_pred_sparse.float()
         mask_pred_sparse = mask_pred_sparse * 4
         true_mask = true_mask * 4

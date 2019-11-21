@@ -12,7 +12,8 @@ from torch.optim.lr_scheduler import MultiStepLR
 
 from eval import eval_net
 from unet.unet_model import UNet
-
+from unet.unet_model import hopenet
+import torchvision.models.resnet as rn
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 gpus = [0]
 def train_net(net,
@@ -29,8 +30,8 @@ def train_net(net,
     dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.1)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.1)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=1)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=1)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -118,7 +119,7 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=30,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
     parser.add_option('-l', '--learning-rate', dest='lr', default=1,
                       type='float', help='learning rate')
@@ -132,7 +133,8 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    net = UNet(n_channels=3, n_classes=64)
+    net =hopenet(rn.Bottleneck, [3, 4, 6, 3], 64)
+    print(net)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))

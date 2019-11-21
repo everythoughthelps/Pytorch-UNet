@@ -32,7 +32,7 @@ class nyudataset(Dataset):
 		images = self.images[index]
 		masks = self.masks[index]
 		image = Image.open(images)
-		mask = Image.open(masks).convert('L')
+		mask = Image.open(masks)
 		original_size = image.size
 		original_w ,original_h = original_size[0],original_size[1]
 
