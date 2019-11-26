@@ -2,6 +2,7 @@ import sys
 import os
 import time
 from optparse import OptionParser
+import visdom
 import logging
 import torch
 import torch.nn as nn
@@ -14,18 +15,16 @@ from eval import eval_net
 from unet.unet_model import UNet
 from unet.unet_model import hopenet
 import torchvision.models.resnet as rn
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 gpus = [0]
-def train_net(net,
-              epochs=5,
-              batchsize=5,
-              lr=0.1,
-              best_threshold_val_RMSE = 100,
-              save_cp=True,
-              gpu=True):
+
+#vis=visdom.Visdom(env='test1')
+
+def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
-    global i, masks_pred, mask_sparse
+    global i, masks_pred, mask_sparse, imgs
     dir_img = '/home/panmeng/data/nyu_images'
     dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
@@ -52,8 +51,8 @@ def train_net(net,
                           momentum=0.9,
                           weight_decay=0.0005)
     scheduler = MultiStepLR(optimizer,[10,190],gamma=0.1)
-    criterion = nn.CrossEntropyLoss()
-    #criterion2 = nn.MSELoss()
+    #criterion = nn.CrossEntropyLoss()
+    criterion2 = nn.MSELoss()
     x_list = []
     y_crossentropy_list = []
     y_RMSE_list = []
@@ -77,8 +76,15 @@ def train_net(net,
             imgs = imgs.cuda()
             mask_sparse = mask_sparse.cuda().long()
 
+            gts = torch.zeros(batchsize, 64, mask_sparse.shape[1], mask_sparse.shape[2], requires_grad=False)
+            for gt_idx in range(len(mask_sparse)):
+                for h in range(len(mask_sparse[gt_idx])):
+                    for w in range(len(mask_sparse[gt_idx, h])):
+                        gts[gt_idx, int(mask_sparse[gt_idx, h, w]), h, w] = 1
+
             masks_pred = net(imgs)
-            loss = criterion(masks_pred, mask_sparse)
+            #loss = criterion(masks_pred, mask_sparse)
+            loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
             epoch_loss += loss.item()
 
             print('{0:.4f} --- loss: {1:.6f}'.format(i / N_train, loss.item()))
@@ -91,14 +97,15 @@ def train_net(net,
 
         print('Epoch finished ! Loss: {}'.format(epoch_loss / (i+1)))
 
-
         with open('train_log.txt','a') as f:
             f.write(str(epoch_loss /(i+1)) +'\n')
 
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        del mask_sparse,masks_pred
+        #vis.line(X=x_list,Y=y_crossentropy_list, win='train_loss', opts=dict(title='train loss'))
+
+        del mask_sparse,masks_pred,imgs
 
         val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
         print('Validation RMSE: {}'.format(val_RMSE))
@@ -106,6 +113,8 @@ def train_net(net,
         with open('val_log.txt','a') as f:
             f.write(str(val_RMSE) +'\n')
         y_RMSE_list.append(str(val_RMSE)+'\n')
+
+        #vis.line(X=x_list,Y=y_RMSE_list, win='test', opts=dict(title='test acc.', legend=['acc.']))
 
         if val_RMSE < best_threshold_val_RMSE:
             best_threshold_val_RMSE = val_RMSE
@@ -155,3 +164,17 @@ if __name__ == '__main__':
         sys.exit(0)
     except SystemExit:
         os._exit(0)
+'''
+LOG_FORMAT = "%(asctime)s %(name)s %(levelname)s %(pathname)s %(message)s "#配置输出日志格式
+DATE_FORMAT = '%Y-%m-%d  %H:%M:%S %a ' #配置输出时间的格式，注意月份和天数不要搞乱了
+logging.basicConfig(level=logging.DEBUG,
+					format=LOG_FORMAT,
+					datefmt = DATE_FORMAT ,
+					filename=r"d:\test\test.log" #有了filename参数就不会直接输出显示到控制台，而是直接写入文件
+					)
+logging.debug("msg1")
+logging.info("msg2")
+logging.warning("msg3")
+logging.error("msg4")
+logging.critical("msg5")
+'''
