@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 import os
 import time
 from optparse import OptionParser
@@ -19,8 +20,8 @@ import torchvision.models.resnet as rn
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 gpus = [0]
 
-#vis=visdom.Visdom(env='test1')
-
+vis=visdom.Visdom(env='test1')
+vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss', 'acc']))
 def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
@@ -29,8 +30,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
     dir_mask = '/home/panmeng/data/nyu_depths'
     val_img_dir = '/home/panmeng/data/nyu_images/dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=1)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=1)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -92,6 +93,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -103,8 +105,6 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        #vis.line(X=x_list,Y=y_crossentropy_list, win='train_loss', opts=dict(title='train loss'))
-
         del mask_sparse,masks_pred,imgs
 
         val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
@@ -113,8 +113,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
         with open('val_log.txt','a') as f:
             f.write(str(val_RMSE) +'\n')
         y_RMSE_list.append(str(val_RMSE)+'\n')
-
-        #vis.line(X=x_list,Y=y_RMSE_list, win='test', opts=dict(title='test acc.', legend=['acc.']))
+        vis.line([[np.array(epoch_loss/(i+1)),np.array(val_RMSE.cpu())]], [np.array(epoch)], win='train', update='append')
+        time.sleep(0.5)
 
         if val_RMSE < best_threshold_val_RMSE:
             best_threshold_val_RMSE = val_RMSE
@@ -143,7 +143,6 @@ if __name__ == '__main__':
     args = get_args()
 
     net =hopenet(rn.Bottleneck, [3, 4, 6, 3], 64)
-    print(net)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))
