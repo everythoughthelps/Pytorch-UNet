@@ -52,8 +52,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
                           momentum=0.9,
                           weight_decay=0.0005)
     scheduler = MultiStepLR(optimizer,[10,190],gamma=0.1)
-    #criterion = nn.CrossEntropyLoss()
-    criterion2 = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
+    #criterion2 = nn.MSELoss()
     x_list = []
     y_crossentropy_list = []
     y_RMSE_list = []
@@ -77,15 +77,9 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             imgs = imgs.cuda()
             mask_sparse = mask_sparse.cuda().long()
 
-            gts = torch.zeros(batchsize, 64, mask_sparse.shape[1], mask_sparse.shape[2], requires_grad=False)
-            for gt_idx in range(len(mask_sparse)):
-                for h in range(len(mask_sparse[gt_idx])):
-                    for w in range(len(mask_sparse[gt_idx, h])):
-                        gts[gt_idx, int(mask_sparse[gt_idx, h, w]), h, w] = 1
-
             masks_pred = net(imgs)
-            #loss = criterion(masks_pred, mask_sparse)
-            loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
+            loss = criterion(masks_pred, mask_sparse)
+            #loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
             epoch_loss += loss.item()
 
             print('{0:.4f} --- loss: {1:.6f}'.format(i / N_train, loss.item()))
