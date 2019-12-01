@@ -87,7 +87,6 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -137,6 +136,7 @@ if __name__ == '__main__':
     args = get_args()
 
     net =hopenet(rn.Bottleneck, [3, 4, 6, 3], 64)
+    print(net)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))

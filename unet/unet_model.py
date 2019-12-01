@@ -48,11 +48,11 @@ class hopenet(rn.ResNet):
         self.up1 = up(2048, 512)
         self.up2 = up(1024, 256)
         self.up3 = up(512, 128)
-        self.up4 = up(256, 64)
-        self.outc = outconv(64, n_classes)
+        self.up4 = up(256, 61)
+        self.conv = nn.Conv2d(64, n_classes,1)
 
-    def forward(self, x):
-        x = self.conv1(x)
+    def forward(self, input):
+        x = self.conv1(input)
         x = self.bn1(x)
         x0 = self.relu(x)
         x1 = self.maxpool(x0)
@@ -65,5 +65,8 @@ class hopenet(rn.ResNet):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x0)
-        x = self.outc(x)
+        print(x.size())
+        x = torch.cat([x,input],dim=1)
+        x = self.conv(x)
+        print(x.size())
         return torch.sigmoid(x)
