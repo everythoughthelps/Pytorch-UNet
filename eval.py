@@ -26,6 +26,7 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
         depth = depth.unsqueeze(2)
 
         mask_pred_sparse= torch.mul(pred,depth.cuda())
+        mask_pred_sparse = mask_pred_sparse.sum(dim=1)
         mask_pred_sparse = mask_pred_sparse.float()
         mask_pred_sparse = mask_pred_sparse * 4
         true_mask = true_mask * 4

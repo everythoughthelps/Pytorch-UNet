@@ -25,7 +25,7 @@ vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss'
 def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
-    global i, masks_pred, mask_sparse, imgs
+    global i, masks_pred, mask_sparse, imgs, depth
     dir_img = '/home/panmeng/data/nyu_images/dir'
     dir_mask = '/home/panmeng/data/nyu_depths/dir'
     val_img_dir = '/home/panmeng/data/nyu_images/valdir/'
@@ -85,6 +85,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             depth = depth.unsqueeze(2)
 
             masks_pred = torch.mul(out,depth.cuda())
+            masks_pred = masks_pred.sum(dim=1)
             loss = criterion2(masks_pred, mask_sparse)
             #loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
             epoch_loss += loss.item()
@@ -105,7 +106,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        del mask_sparse,masks_pred,imgs
+        del mask_sparse,masks_pred,imgs,depth
 
         val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
         print('Validation RMSE: {}'.format(val_RMSE))
