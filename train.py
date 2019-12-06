@@ -26,10 +26,10 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
 
     dir_checkpoint = 'checkpoints/'
     global i, masks_pred, mask_sparse, imgs
-    dir_img = '/home/panmeng/data/nyu_images'
-    dir_mask = '/home/panmeng/data/nyu_depths'
-    val_img_dir = '/home/panmeng/data/nyu_images/dir/'
-    val_mask_dir = '/home/panmeng/data/nyu_depths/dir/'
+    dir_img = '/home/panmeng/data/nyu_images/dir'
+    dir_mask = '/home/panmeng/data/nyu_depths/dir'
+    val_img_dir = '/home/panmeng/data/nyu_images/valdir/'
+    val_mask_dir = '/home/panmeng/data/nyu_depths/valdir/'
     train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
     val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
@@ -51,9 +51,9 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = MultiStepLR(optimizer,[10,190],gamma=0.1)
-    criterion = nn.CrossEntropyLoss()
-    #criterion2 = nn.MSELoss()
+    scheduler = MultiStepLR(optimizer,[80,1000,3000],gamma=0.1)
+    #criterion = nn.CrossEntropyLoss()
+    criterion2 = nn.MSELoss()
     x_list = []
     y_crossentropy_list = []
     y_RMSE_list = []
@@ -75,10 +75,17 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             mask_sparse = mask_sparse.float()
 
             imgs = imgs.cuda()
-            mask_sparse = mask_sparse.cuda().long()
+            mask_sparse = mask_sparse.cuda()
 
-            masks_pred = net(imgs)
-            loss = criterion(masks_pred, mask_sparse)
+            out = net(imgs)
+
+            depth = torch.range(1,64)
+            depth = depth.unsqueeze(0)
+            depth = depth.unsqueeze(2)
+            depth = depth.unsqueeze(2)
+
+            masks_pred = torch.mul(out,depth.cuda())
+            loss = criterion2(masks_pred, mask_sparse)
             #loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
             epoch_loss += loss.item()
 
@@ -119,7 +126,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
 
 def get_args():
     parser = OptionParser()
-    parser.add_option('-e', '--epochs', dest='epochs', default=400, type='int',
+    parser.add_option('-e', '--epochs', dest='epochs', default=4000, type='int',
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')

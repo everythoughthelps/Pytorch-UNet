@@ -19,7 +19,13 @@ def eval_net(net, dataset, epochs,best_threshold_val_rmse, gpu=True):
             true_mask = true_mask.cuda()
 
         pred = net(img)
-        probability,mask_pred_sparse= torch.max(pred,1)
+
+        depth = torch.range(1, 64)
+        depth = depth.unsqueeze(0)
+        depth = depth.unsqueeze(2)
+        depth = depth.unsqueeze(2)
+
+        mask_pred_sparse= torch.mul(pred,depth.cuda())
         mask_pred_sparse = mask_pred_sparse.float()
         mask_pred_sparse = mask_pred_sparse * 4
         true_mask = true_mask * 4
