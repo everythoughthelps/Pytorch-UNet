@@ -47,4 +47,4 @@ class nyudataset(Dataset):
 			mask = mask / 4
 			mask = np.floor(mask)
 			mask_sparse = mask
-			return image, mask_sparse
+			return image, mask_sparse,images.lstrip('/home/panmeng/data/nyu_images/test_dir/')

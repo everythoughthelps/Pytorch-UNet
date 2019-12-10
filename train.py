@@ -22,16 +22,16 @@ gpus = [0]
 
 vis=visdom.Visdom(env='test1')
 vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss', 'acc']))
-def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save_cp=True,gpu=True):
+def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
-    global i, masks_pred, mask_sparse, imgs, depth
-    dir_img = '/home/panmeng/data/nyu_images/dir'
-    dir_mask = '/home/panmeng/data/nyu_depths/dir'
-    val_img_dir = '/home/panmeng/data/nyu_images/valdir/'
-    val_mask_dir = '/home/panmeng/data/nyu_depths/valdir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
+    global i, masks_pred, mask_sparse, imgs, depth, best_val_rmse
+    dir_img = '/home/panmeng/data/nyu_images/train_dir'
+    dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
+    val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
+    val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.05)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.05)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -95,6 +95,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -108,17 +109,20 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,best_threshold_val_RMSE = 100,save
 
         del mask_sparse,masks_pred,imgs,depth
 
-        val_RMSE= eval_net(net, test_dataloader,epoch,best_threshold_val_RMSE, gpu=True)
-        print('Validation RMSE: {}'.format(val_RMSE))
+        val_rmse= eval_net(net, test_dataloader,epoch,gpu=True)
+        print('Validation RMSE: {}'.format(val_rmse))
 
         with open('val_log.txt','a') as f:
-            f.write(str(val_RMSE) +'\n')
-        y_RMSE_list.append(str(val_RMSE)+'\n')
-        vis.line([[np.array(epoch_loss/(i+1)),np.array(val_RMSE.cpu())]], [np.array(epoch)], win='train', update='append')
+            f.write(str(val_rmse) +'\n')
+        y_RMSE_list.append(str(val_rmse)+'\n')
+        vis.line([[np.array(epoch_loss/(i+1)),np.array(val_rmse)]], [np.array(epoch)], win='train', update='append')
         time.sleep(0.5)
 
-        if val_RMSE < best_threshold_val_RMSE:
-            best_threshold_val_RMSE = val_RMSE
+        if epoch == 0:
+            best_val_rmse = val_rmse
+
+        if val_rmse < best_val_rmse:
+            best_val_rmse = val_rmse
             if not os.path.exists('checkpoints'):
                 os.mkdir('checkpoints')
             torch.save(net.state_dict(),
