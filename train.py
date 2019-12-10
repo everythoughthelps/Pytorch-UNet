@@ -51,7 +51,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = MultiStepLR(optimizer,[80,1000,3000],gamma=0.1)
+    scheduler = MultiStepLR(optimizer,[80,1000,1500],gamma=0.1)
     #criterion = nn.CrossEntropyLoss()
     criterion2 = nn.MSELoss()
     x_list = []
@@ -95,7 +95,6 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -131,11 +130,11 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
 def get_args():
     parser = OptionParser()
-    parser.add_option('-e', '--epochs', dest='epochs', default=4000, type='int',
+    parser.add_option('-e', '--epochs', dest='epochs', default=2000, type='int',
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=1,
+    parser.add_option('-l', '--learning-rate', dest='lr', default=0.01,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')

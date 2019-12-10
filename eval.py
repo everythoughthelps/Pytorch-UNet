@@ -32,7 +32,6 @@ def eval_net(net, dataset, epochs,gpu=True):
 
         loss = nn.MSELoss()
         tot += loss(mask_pred_sparse,true_mask).item()
-        break
 
     val_mse = tot /(i + 1)
     val_rmse = np.sqrt(val_mse)
