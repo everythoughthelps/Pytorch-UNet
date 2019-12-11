@@ -52,14 +52,13 @@ def eval_net(net, dataset, epoch, gpu=True):
                 img = img.cuda()
 
             out = net(img)
-            depth = torch.range(1, 64)
-            depth = depth.unsqueeze(0)
-            depth = depth.unsqueeze(2)
-            depth = depth.unsqueeze(2)
+            #depth = torch.range(1, 64)
+            #depth = depth.unsqueeze(0)
+            #depth = depth.unsqueeze(2)
+            #depth = depth.unsqueeze(2)
 
-            out_mse = F.softmax(out, dim=1)
-            mask_pred_sparse= torch.mul(out_mse,depth.cuda())
-            mask_pred_sparse = mask_pred_sparse.sum(dim=1)
+            mask_prob = F.softmax(out, dim=1)
+            mask_pred_sparse = mask_prob.max(dim=1)
             mask_pred_sparse = mask_pred_sparse * 4
 
             results_imgs = ToPILImage()(mask_pred_sparse.float().cpu())

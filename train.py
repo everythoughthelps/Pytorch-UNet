@@ -89,7 +89,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
             #masks_pred = torch.mul(out_mse,depth.cuda())
             masks_prob = torch.softmax(out,dim=1)
-            masks_pred = masks_prob.max(dim=1)
+            masks_pred = torch.max(masks_prob,dim=1)
             loss_mse = criterion2(masks_pred, mask_sparse)
             loss = loss_mse + loss_crossentropy
             epoch_loss += loss.item()
