@@ -25,7 +25,7 @@ def eval_net(net, dataset, epoch, gpu=True):
         #depth = depth.unsqueeze(2)
 
         mask_prob = F.softmax(out, dim=1)
-        mask_pred_sparse = mask_prob.max(dim=1)
+        _,mask_pred_sparse = mask_prob.max(dim=1)
         mask_pred_sparse = mask_pred_sparse * 4
         true_mask = true_mask * 4
 
@@ -58,7 +58,7 @@ def eval_net(net, dataset, epoch, gpu=True):
             #depth = depth.unsqueeze(2)
 
             mask_prob = F.softmax(out, dim=1)
-            mask_pred_sparse = mask_prob.max(dim=1)
+            _,mask_pred_sparse = mask_prob.max(dim=1)
             mask_pred_sparse = mask_pred_sparse * 4
 
             results_imgs = ToPILImage()(mask_pred_sparse.float().cpu())
