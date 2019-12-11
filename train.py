@@ -11,6 +11,7 @@ from utils.NYU_dataloader import nyudataset
 from torch.utils.data import DataLoader
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
+import torch.nn.functional as F
 
 from eval import eval_net
 from unet.unet_model import UNet
@@ -25,13 +26,13 @@ vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss'
 def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
-    global i, masks_pred, mask_sparse, imgs, depth, best_val_rmse
+    global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
     dir_img = '/home/panmeng/data/nyu_images/train_dir'
     dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.05)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.05)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.1)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.1)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -52,7 +53,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
                           momentum=0.9,
                           weight_decay=0.0005)
     scheduler = MultiStepLR(optimizer,[80,1000,1500],gamma=0.1)
-    #criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
     criterion2 = nn.MSELoss()
     x_list = []
     y_crossentropy_list = []
@@ -78,16 +79,19 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
             mask_sparse = mask_sparse.cuda()
 
             out = net(imgs)
+            loss_crossentropy = criterion(out,mask_sparse.long())
 
-            depth = torch.range(1,64)
-            depth = depth.unsqueeze(0)
-            depth = depth.unsqueeze(2)
-            depth = depth.unsqueeze(2)
+            #out_mse = F.softmax(out,dim=1)
+            #depth = torch.range(1,64)
+            #depth = depth.unsqueeze(0)
+            #depth = depth.unsqueeze(2)
+            #depth = depth.unsqueeze(2)
 
-            masks_pred = torch.mul(out,depth.cuda())
-            masks_pred = masks_pred.sum(dim=1)
-            loss = criterion2(masks_pred, mask_sparse)
-            #loss = criterion2(masks_pred,gts.cuda()).mul(20.0)
+            #masks_pred = torch.mul(out_mse,depth.cuda())
+            masks_prob = torch.softmax(out,dim=1)
+            masks_pred = masks_prob.max(dim=1)
+            loss_mse = criterion2(masks_pred, mask_sparse)
+            loss = loss_mse + loss_crossentropy
             epoch_loss += loss.item()
 
             print('{0:.4f} --- loss: {1:.6f}'.format(i / N_train, loss.item()))
@@ -106,7 +110,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        del mask_sparse,masks_pred,imgs,depth
+        del mask_sparse,masks_prob,imgs,depth,masks_pred
 
         val_rmse= eval_net(net, test_dataloader,epoch,gpu=True)
         print('Validation RMSE: {}'.format(val_rmse))
@@ -172,10 +176,10 @@ if __name__ == '__main__':
 LOG_FORMAT = "%(asctime)s %(name)s %(levelname)s %(pathname)s %(message)s "#配置输出日志格式
 DATE_FORMAT = '%Y-%m-%d  %H:%M:%S %a ' #配置输出时间的格式，注意月份和天数不要搞乱了
 logging.basicConfig(level=logging.DEBUG,
-					format=LOG_FORMAT,
-					datefmt = DATE_FORMAT ,
-					filename=r"d:\test\test.log" #有了filename参数就不会直接输出显示到控制台，而是直接写入文件
-					)
+                    format=LOG_FORMAT,
+                    datefmt = DATE_FORMAT ,
+                    filename=r"d:\test\test.log" #有了filename参数就不会直接输出显示到控制台，而是直接写入文件
+                    )
 logging.debug("msg1")
 logging.info("msg2")
 logging.warning("msg3")

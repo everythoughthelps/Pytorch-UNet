@@ -66,5 +66,4 @@ class hopenet(rn.ResNet):
         x = self.up3(x, x2)
         x = self.up4(x, x0)
         x = self.outc(x)
-        x = F.softmax(x,dim=1)
         return x

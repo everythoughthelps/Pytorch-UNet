@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torchvision.transforms import ToPILImage
 import numpy as np
-
+import torch.nn.functional as F
 def eval_net(net, dataset, epochs,gpu=True):
     global i, val_rmse, mask_pred_sparse, b, best_threshold_val_rmse
     net.eval()
@@ -18,14 +18,15 @@ def eval_net(net, dataset, epochs,gpu=True):
             img = img.cuda()
             true_mask = true_mask.cuda()
 
-        pred = net(img)
+        out = net(img)
 
         depth = torch.range(1, 64)
         depth = depth.unsqueeze(0)
         depth = depth.unsqueeze(2)
         depth = depth.unsqueeze(2)
 
-        mask_pred_sparse= torch.mul(pred,depth.cuda())
+        out_mse = F.softmax(out, dim=1)
+        mask_pred_sparse= torch.mul(out_mse,depth.cuda())
         mask_pred_sparse = mask_pred_sparse.sum(dim=1)
         mask_pred_sparse = mask_pred_sparse * 4
         true_mask = true_mask * 4
@@ -44,7 +45,6 @@ def eval_net(net, dataset, epochs,gpu=True):
 
     if epochs % 20 ==0 or val_rmse == best_threshold_val_rmse:
         print('save results')
-        '''
         for j,m in enumerate(dataset):
             img = m[0]
             img = img.float()
@@ -52,22 +52,22 @@ def eval_net(net, dataset, epochs,gpu=True):
             if gpu:
                 img = img.cuda()
 
-            pred = net(img)
+            out = net(img)
             depth = torch.range(1, 64)
             depth = depth.unsqueeze(0)
             depth = depth.unsqueeze(2)
             depth = depth.unsqueeze(2)
 
-            mask_pred_sparse= torch.mul(pred,depth.cuda())
+            out_mse = F.softmax(out, dim=1)
+            mask_pred_sparse= torch.mul(out_mse,depth.cuda())
             mask_pred_sparse = mask_pred_sparse.sum(dim=1)
             mask_pred_sparse = mask_pred_sparse * 4
-            '''
-        results_imgs = ToPILImage()(mask_pred_sparse.float().cpu())
 
-        if not os.path.exists('results'):
-            os.mkdir('results')
-        if not os.path.exists('results/'+str(epochs)+'epochs_results'):
-            os.mkdir('results/'+str(epochs)+'epochs_results')
-        print(str(b[2]).strip('()'))
-        results_imgs.save(os.getcwd()+'/results/'+str(epochs)+'epochs_results/'+str(b[2]).strip('(),\''))
+            results_imgs = ToPILImage()(mask_pred_sparse.float().cpu())
+
+            if not os.path.exists('results'):
+                os.mkdir('results')
+            if not os.path.exists('results/'+str(epochs)+'epochs_results'):
+                os.mkdir('results/'+str(epochs)+'epochs_results')
+            results_imgs.save(os.getcwd()+'/results/'+str(epochs)+'epochs_results/'+str(m[2]).strip('(),\''))
     return val_rmse
