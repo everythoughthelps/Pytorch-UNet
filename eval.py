@@ -30,8 +30,8 @@ def eval_net(net, dataset, epoch, gpu=True):
         true_mask = true_mask * 4
 
         loss = nn.MSELoss()
-        tot += loss(mask_pred_sparse,true_mask).item()
-        print(i/len(dataset))
+        tot += loss(mask_pred_sparse.float(),true_mask).item()
+        print(i/len(dataset),loss(mask_pred_sparse.float(),true_mask).item())
 
     val_mse = tot /(i + 1)
     val_rmse = np.sqrt(val_mse)
