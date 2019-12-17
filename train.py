@@ -11,7 +11,6 @@ from utils.NYU_dataloader import nyudataset
 from torch.utils.data import DataLoader
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
-import torch.nn.functional as F
 
 from eval import eval_net
 from unet.unet_model import UNet
@@ -27,12 +26,12 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
-    dir_img = '/home/panmeng/data/nyu_images/train_dir'
-    dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
+    dir_img = '/home/panmeng/data/nyu_images/test_dir'
+    dir_mask = '/home/panmeng/data/nyu_depths/test_dir'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.1)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.1)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 

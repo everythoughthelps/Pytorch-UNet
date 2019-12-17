@@ -61,8 +61,7 @@ def eval_net(net, dataset, epoch, gpu=True):
             _,mask_pred_sparse = mask_prob.max(dim=1)
             mask_pred_sparse = mask_pred_sparse * 4
 
-            results_imgs = ToPILImage()(mask_pred_sparse.float().cpu())
-
+            results_imgs = ToPILImage()(mask_pred_sparse.float().cpu() / 255)
             if not os.path.exists('results'):
                 os.mkdir('results')
             if not os.path.exists('results/' + str(epoch) + 'epochs_results'):
