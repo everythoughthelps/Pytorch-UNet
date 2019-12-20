@@ -30,8 +30,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
     dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.1)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.1)
+    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -98,7 +98,6 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -136,9 +135,9 @@ def get_args():
     parser = OptionParser()
     parser.add_option('-e', '--epochs', dest='epochs', default=2000, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=10,
+    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=0.1,
+    parser.add_option('-l', '--learning-rate', dest='lr', default=0.01,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
