@@ -5,9 +5,9 @@ from torchvision.transforms import ToPILImage
 import numpy as np
 import torch.nn.functional as F
 def eval_net(net, dataset, epoch, gpu=True):
-    global i, val_rmse, mask_pred_sparse,  best_threshold_val_rmse
+    global val_rmse, mask_pred_sparse,  best_threshold_val_rmse
     net.eval()
-    tot = 0
+    total_rmse = 0
     for i, b in enumerate(dataset):
         img = b[0]
         img = img.float()
@@ -30,11 +30,12 @@ def eval_net(net, dataset, epoch, gpu=True):
         true_mask = true_mask * 4
 
         loss = nn.MSELoss()
-        tot += loss(mask_pred_sparse.float(),true_mask).item()
-        print(i/len(dataset),loss(mask_pred_sparse.float(),true_mask).item())
+        mse = loss(mask_pred_sparse.float(),true_mask).item()
+        rmse = np.sqrt(mse)
+        total_rmse += rmse
+        print(i/len(dataset),b[2] ,rmse)
 
-    val_mse = tot /(i + 1)
-    val_rmse = np.sqrt(val_mse)
+    val_rmse = total_rmse / len(dataset)
 
     if epoch == 0:
         best_threshold_val_rmse = val_rmse
