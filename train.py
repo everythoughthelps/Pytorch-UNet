@@ -26,8 +26,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
-    dir_img = '/home/panmeng/data/nyu_images/train_dir'
-    dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
+    dir_img = '/home/panmeng/data/nyu_images/test_dir'
+    dir_mask = '/home/panmeng/data/nyu_depths/test_dir'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
     train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
