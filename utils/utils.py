@@ -176,14 +176,15 @@ def extract_depths_NYU(path):
 
 def readimg():
 	path1 = '/data/sync/bookstore_0001f/sync_depth_00000.png'
-	path2 = '/home/panmeng/data/nyu_depths/train_dir/104.png'
+	path2 = '/home/panmeng/data/nyu_images/train_dir/104.png'
 	img = Image.open(path1)
-	img = img.convert('L')
+	#img = img.convert('L')
 	img_matrix = np.array(img)
-	img.show()
+	#img.show()
 
 	img2 = Image.open(path2)
 	img_matrix2 = np.array(img2)
+	img_matrix2 = img_matrix2.transpose((2,0,1))
 	img2.show()
 if __name__ == '__main__':
 	readimg()
