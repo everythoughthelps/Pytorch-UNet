@@ -22,7 +22,7 @@ gpus = [0]
 
 vis=visdom.Visdom(env='test1')
 vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss', 'acc']))
-def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
+def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
@@ -30,8 +30,8 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
     dir_mask = '/home/panmeng/data/nyu_depths/test_dir'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
+    train_dataset = nyudataset(dir_img,dir_mask,classes,scale=0.5)
+    val_dataset = nyudataset(val_img_dir,val_mask_dir,classes,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -98,6 +98,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
@@ -111,7 +112,7 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
         del mask_sparse,masks_prob,imgs,masks_pred
 
-        val_rmse= eval_net(net, test_dataloader,epoch,gpu=True)
+        val_rmse= eval_net(net, test_dataloader,epoch,classes,gpu=True)
         print('Validation RMSE: {}'.format(val_rmse))
 
         with open('val_log.txt','a') as f:
@@ -137,19 +138,20 @@ def get_args():
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
-    parser.add_option('-l', '--learning-rate', dest='lr', default=0.01,
+    parser.add_option('-r', '--learning-rate', dest='lr', default=0.01,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
-    parser.add_option('-c', '--load', dest='load',
+    parser.add_option('-l', '--load', dest='load',
                       default=False, help='load file model')#'/home/panmeng/PycharmProjects/pt1.1/unet/checkpoints/CP1.pth'
+    parser.add_option('-c', '--classes', dest='classes',default=64)
     (options, args) = parser.parse_args()
     return options
 
 if __name__ == '__main__':
     args = get_args()
 
-    net =hopenet(rn.Bottleneck, [3, 4, 6, 3], 64)
+    net =hopenet(rn.Bottleneck, [3, 4, 6, 3],args.classes)
     print(net)
     if args.load:
         net.load_state_dict(torch.load(args.load))
@@ -165,6 +167,7 @@ if __name__ == '__main__':
               epochs=args.epochs,
               batchsize=args.batchsize,
               lr=args.lr,
+              classes=args.classes,
               gpu=args.gpu)
 
     try:

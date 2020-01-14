@@ -5,7 +5,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 
 class nyudataset(Dataset):
-	def __init__(self, image_dir,mask_dir,scale):
+	def __init__(self, image_dir,mask_dir,classes,scale):
 		self.image_dir = image_dir
 		self.mask_dir = mask_dir
 		self.images = []
@@ -13,6 +13,7 @@ class nyudataset(Dataset):
 		self.images_name = os.listdir(self.image_dir)
 		self.masks_name = os.listdir(self.mask_dir)
 		self.scale = scale
+		self.classes = classes
 
 		for id in self.images_name:
 			if 'png' in id:
@@ -44,7 +45,7 @@ class nyudataset(Dataset):
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
 			mask = np.array(mask)
 
-			mask = mask / 4
+			mask = mask / (256//self.classes)
 			mask = np.floor(mask)
 			mask_sparse = mask
-			return image, mask_sparse,images.lstrip('/home/panmeng/data/nyu_images/test_dir/')
+			return image, mask_sparse,images.lstrip(str(self.image_dir))
