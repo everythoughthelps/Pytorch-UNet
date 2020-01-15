@@ -11,10 +11,11 @@ from utils.NYU_dataloader import nyudataset
 from torch.utils.data import DataLoader
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
-
+import utils
 from eval import eval_net
 from unet.unet_model import UNet
 from unet.unet_model import hopenet
+import torch.nn.functional as F
 import torchvision.models.resnet as rn
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -52,7 +53,7 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True):
                           momentum=0.9,
                           weight_decay=0.0005)
     scheduler = MultiStepLR(optimizer,[80,1000,1500],gamma=0.1)
-    criterion = nn.CrossEntropyLoss()
+    criterion = utils.label_smooth_crossentropy()
     criterion2 = nn.MSELoss()
     x_list = []
     y_crossentropy_list = []
@@ -73,12 +74,14 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True):
             imgs = imgs.float()
             mask_sparse = b[1]
             mask_sparse = mask_sparse.float()
+            mask_sparse_onehot = b[3]
+
 
             imgs = imgs.cuda()
             mask_sparse = mask_sparse.cuda()
 
             out = net(imgs)
-            loss_crossentropy = criterion(out,mask_sparse.long())
+            loss_crossentropy = criterion(out,mask_sparse_onehot.float().cuda())
 
             #out_mse = F.softmax(out,dim=1)
             #depth = torch.range(1,64)
@@ -138,7 +141,7 @@ def get_args():
                       help='number of epochs')
     parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
                       type='int', help='batch size')
-    parser.add_option('-r', '--learning-rate', dest='lr', default=0.01,
+    parser.add_option('-r', '--learning-rate', dest='lr', default=0.1,
                       type='float', help='learning rate')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
