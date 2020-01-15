@@ -50,6 +50,7 @@ class hopenet(rn.ResNet):
         self.up4 = up(256, 128)
         self.outc = outconv(128, n_classes)
 
+
     def forward(self,x):
         x = self.conv1(x)
         x = self.bn1(x)
