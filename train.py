@@ -7,7 +7,8 @@ import visdom
 import logging
 import torch
 import torch.nn as nn
-from utils.NYU_dataloader import nyudataset
+from utils.NYU_dataloader import val_nyudataset
+from utils.NYU_dataloader import train_nyudataset
 from torch.utils.data import DataLoader
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
@@ -26,12 +27,11 @@ def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
-    dir_img = '/home/panmeng/data/nyu_images/train_dir'
-    dir_mask = '/home/panmeng/data/nyu_depths/train_dir'
+    dir = '/data/sync'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = nyudataset(dir_img,dir_mask,scale=0.5)
-    val_dataset = nyudataset(val_img_dir,val_mask_dir,scale=0.5)
+    train_dataset = train_nyudataset(dir,scale=0.5,classes=64)
+    val_dataset = val_nyudataset(val_img_dir,val_mask_dir,classes=64,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
