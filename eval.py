@@ -34,8 +34,9 @@ def eval_net(net, dataset, epoch, gpu=True):
         rmse = np.sqrt(mse)
         total_rmse += rmse
         print(i/len(dataset),b[2] ,rmse)
+        break
 
-    val_rmse = total_rmse / len(dataset)
+    val_rmse = total_rmse #/ len(dataset)
 
     if epoch == 0:
         best_threshold_val_rmse = val_rmse
@@ -68,4 +69,5 @@ def eval_net(net, dataset, epoch, gpu=True):
             if not os.path.exists('results/' + str(epoch) + 'epochs_results'):
                 os.mkdir('results/' + str(epoch) + 'epochs_results')
             results_imgs.save(os.getcwd() +'/results/' + str(epoch) + 'epochs_results/' + str(m[2]).strip('(),\''))
+            break
     return val_rmse

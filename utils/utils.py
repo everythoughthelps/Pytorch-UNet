@@ -166,18 +166,14 @@ def extract_depths_NYU(path):
     pass
 
 
-#def readimg():
-#    path1 = '/data/sync/basement_0001a/sync_depth_00000.png'
-#    path2 = '/home/panmeng/data/nyu_images/train_dir/104.png'
-#    img = Image.open(path1)
-#    img = img.convert('L')
-#    img_matrix = np.array(img)
-#    #img.show()
-#
-#    #img2 = Image.open(path2)
-#    #img_matrix2 = np.array(img2)
-#    #img_matrix2 = img_matrix2.transpose((2,0,1))
-#    img.show()
+def readimg():
+    path1 = '/data/sync/basement_0001a/sync_depth_00001.png'
+    path2 = '/home/panmeng/data/nyu_depths/train_dir/10.png'
+    img = Image.open(path1)
+    #img = img.convert('L')
+    img_matrix = np.array(img)
+    pass
+
 #def label_smooth(target, classes, epsilon):
 #    one_hot = F.one_hot(target,classes)
 #    smooth_label = one_hot*(1 - epsilon) + torch.ones_like(one_hot)*epsilon
@@ -189,7 +185,6 @@ def extract_depths_NYU(path):
 #        super(label_smooth_crossentropy, self).__init__(size_average)
 #    def forward(self,input,target):
 #        return torch.sum(-(torch.log_softmax(input,1).matmul(target)))
-#
-#readimg()
+readimg()
 if __name__ == '__main__':
-   ImageToMatrix()
+    pass

@@ -47,7 +47,7 @@ class val_nyudataset(Dataset):
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
 			mask = np.array(mask)
 
-			mask = mask / self.classes
+			mask = mask / (256//self.classes)
 			mask = np.floor(mask)
 			mask_sparse = mask
 			return image, mask_sparse,images.lstrip('/home/panmeng/data/nyu_images/test_dir/')
@@ -102,7 +102,7 @@ class train_nyudataset(Dataset):
 			image = np.array(image)
 			image = image.transpose((2,0,1))  # transpose the  H*W*C to C*H*W
 			mask = np.array(mask)
-			mask = mask / self.classes
+			mask = (mask / 10000 * 256)/(256//self.classes)
 			mask = np.floor(mask)
 			mask_sparse = mask
 			return image, mask_sparse,images.lstrip('/home/panmeng/data/nyu_images/test_dir/')

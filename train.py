@@ -98,6 +98,7 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            break
         print('time',(time.time()-start_time)/60)
         scheduler.step()
 
