@@ -1,10 +1,11 @@
 from torch.utils.data import Dataset
+import utils
+import torch
 import os
 import numpy as np
 from PIL import Image
 import torchvision.transforms as transforms
-
-
+import torch.nn.functional as F
 
 class val_nyudataset(Dataset):
 	def __init__(self, image_dir,mask_dir,classes,scale):
@@ -106,3 +107,7 @@ class train_nyudataset(Dataset):
 			mask = np.floor(mask)
 			mask_sparse = mask
 			return image, mask_sparse,images.lstrip('/home/panmeng/data/nyu_images/test_dir/')
+
+			#mask_sparse = np.floor(mask)
+			#mask_sparse_onehot = utils.label_smooth(torch.tensor(mask_sparse).long(), self.classes, 0.1)
+			#return image, mask_sparse,images.lstrip(str(self.image_dir)),mask_sparse_onehot

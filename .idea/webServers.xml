@@ -2,6 +2,7 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
+<<<<<<< HEAD
 <<<<<<< Updated upstream
       <webServer id="fe3a530f-96bf-4dc8-814a-9494ea9dbcd8" name="172.18.242.71" url="http://192.168.1.213">
         <fileTransfer host="192.168.1.213" port="22" accessType="SFTP">
@@ -9,6 +10,10 @@
       <webServer id="fe3a530f-96bf-4dc8-814a-9494ea9dbcd8" name="172.18.242.71" url="http://172.18.242.169">
         <fileTransfer host="172.18.242.169" port="22" accessType="SFTP">
 >>>>>>> Stashed changes
+=======
+      <webServer id="fe3a530f-96bf-4dc8-814a-9494ea9dbcd8" name="172.18.242.71" url="http://172.18.242.173">
+        <fileTransfer host="172.18.242.173" port="22" accessType="SFTP">
+>>>>>>> 5d0378698a80c4b4b999d377d14d7af2bfde2977
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

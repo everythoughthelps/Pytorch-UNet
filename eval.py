@@ -4,7 +4,7 @@ from torch import nn
 from torchvision.transforms import ToPILImage
 import numpy as np
 import torch.nn.functional as F
-def eval_net(net, dataset, epoch, gpu=True):
+def eval_net(net, dataset, epoch, classes,gpu=True):
     global val_rmse, mask_pred_sparse,  best_threshold_val_rmse
     net.eval()
     total_rmse = 0
@@ -26,8 +26,8 @@ def eval_net(net, dataset, epoch, gpu=True):
 
         mask_prob = F.softmax(out, dim=1)
         _,mask_pred_sparse = mask_prob.max(dim=1)
-        mask_pred_sparse = mask_pred_sparse * 4
-        true_mask = true_mask * 4
+        mask_pred_sparse = mask_pred_sparse * (256//classes)
+        true_mask = true_mask * (256//classes)
 
         loss = nn.MSELoss()
         mse = loss(mask_pred_sparse.float(),true_mask).item()
@@ -36,7 +36,7 @@ def eval_net(net, dataset, epoch, gpu=True):
         print(i/len(dataset),b[2] ,rmse)
         break
 
-    val_rmse = total_rmse #/ len(dataset)
+    val_rmse = total_rmse / len(dataset)
 
     if epoch == 0:
         best_threshold_val_rmse = val_rmse
@@ -61,7 +61,7 @@ def eval_net(net, dataset, epoch, gpu=True):
 
             mask_prob = F.softmax(out, dim=1)
             _,mask_pred_sparse = mask_prob.max(dim=1)
-            mask_pred_sparse = mask_pred_sparse * 4
+            mask_pred_sparse = mask_pred_sparse * (256//classes)
 
             results_imgs = ToPILImage()(mask_pred_sparse.float().cpu() / 255)
             if not os.path.exists('results'):

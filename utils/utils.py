@@ -1,4 +1,7 @@
 import os
+from torch.nn.modules.loss import _Loss
+import torch
+import torch.nn.functional as F
 import random
 
 import h5py as h5py
@@ -15,13 +18,16 @@ def get_square(img, pos):
     if pos == 0:
         return img[:, :]
     else:
-        return img[:,:]
+        return img[:, :]
+
 
 def split_img_into_squares(img):
     return get_square(img, 0), get_square(img, 1)
 
+
 def hwc_to_chw(img):
     return np.transpose(img, axes=[2, 0, 1])
+
 
 def resize_and_crop(pilimg, scale=0.5, final_height=None):
     w = pilimg.size[0]
@@ -38,6 +44,7 @@ def resize_and_crop(pilimg, scale=0.5, final_height=None):
     img = img.crop((0, diff // 2, newW, newH - diff // 2))
     return np.array(img, dtype=np.float32)
 
+
 def batch(iterable, batch_size):
     """Yields lists by batch"""
     b = []
@@ -50,6 +57,7 @@ def batch(iterable, batch_size):
     if len(b) > 0:
         yield b
 
+
 def split_train_val(dataset, val_percent=0.05):
     dataset = list(dataset)
     length = len(dataset)
@@ -60,6 +68,7 @@ def split_train_val(dataset, val_percent=0.05):
 
 def normalize(x):
     return x / 255
+
 
 def merge_masks(img1, img2, full_w):
     h = img1.shape[0]
@@ -85,15 +94,13 @@ def rle_encode(mask_image):
     return runs
 
 
-
-
 def ImageToMatrix():
     # 读取图片
     path = '/home/panmeng/data/nyu_depths/4.png'
-    #path = '/home/panmeng/data/sceneflow/driving__disparity/15mm_focallength/scene_backwards/fast/left/0001.pfm'
-    #im = Image.open(path)
-    #image_arr = np.array(im)
-    #print(image_arr)
+    # path = '/home/panmeng/data/sceneflow/driving__disparity/15mm_focallength/scene_backwards/fast/left/0001.pfm'
+    # im = Image.open(path)
+    # image_arr = np.array(im)
+    # print(image_arr)
 
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     print("图像的形状,返回一个图像的(行数,列数,通道数):", img.shape)
@@ -101,17 +108,19 @@ def ImageToMatrix():
     print("图像的数据类型:", img.dtype)
     image_arr = np.array(img)
     print(image_arr)
-    with open('pixel.txt','w') as f:
+    with open('pixel.txt', 'w') as f:
         f.write(str(image_arr))
-    #img = imgplt.imread(path)
-    #plt.imshow(img)
-    #plt.savefig('grayimg')
-    #plt.show()
+    # img = imgplt.imread(path)
+    # plt.imshow(img)
+    # plt.savefig('grayimg')
+    # plt.show()
+
+
 def extractNYU(path):
     f = h5py.File(path)
-    print(f,type(f))
+    print(f, type(f))
     images = f['images']
-    print(images,type(images))
+    print(images, type(images))
     images = np.array(images)
 
     path_converted = '/home/panmeng/data/'
@@ -134,9 +143,11 @@ def extractNYU(path):
         plt.imshow(img)
         plt.axis('off')
         plt.show()
-        #os.mkdir('/home/panmeng/data/nyu_images')
+        # os.mkdir('/home/panmeng/data/nyu_images')
         iconpath = '/home/panmeng/data/nyu_images/' + str(i) + '.png'
         img.save(iconpath, optimize=True)
+
+
 def extract_depths_NYU(path):
     f = h5py.File(path)
     print(f, type(f))
@@ -185,6 +196,18 @@ def readimg():
 #        super(label_smooth_crossentropy, self).__init__(size_average)
 #    def forward(self,input,target):
 #        return torch.sum(-(torch.log_softmax(input,1).matmul(target)))
-readimg()
+
+def label_smooth(target, classes, epsilon):
+    one_hot = F.one_hot(target,classes)
+    smooth_label = one_hot*(1 - epsilon) + torch.ones_like(one_hot)*epsilon
+    smooth_label = smooth_label.transpose(0,2)
+    return smooth_label
+
+class label_smooth_crossentropy(_Loss):
+    def __init__(self, size_average=None, reduce=None, reduction='mean'):
+        super(label_smooth_crossentropy, self).__init__(size_average)
+    def forward(self,input,target):
+        return torch.sum(-(torch.log_softmax(input,1).matmul(target)))
+
 if __name__ == '__main__':
     pass
