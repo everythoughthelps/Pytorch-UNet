@@ -60,6 +60,8 @@ class train_nyudataset(Dataset):
 		self.scale = scale
 		self.read(self.dir, level=5)
 		self.classes = classes
+		print(self.masks)
+		print(self.images)
 #EXTENTIONS = ['.bmp', '.JPG', '.PNG', '.jpg', '.png']
 
 	def is_image(self,file_name):
@@ -73,6 +75,7 @@ class train_nyudataset(Dataset):
 		if level == 0:
 			return None
 		file_names = os.listdir(file_path)
+		file_names.sort()
 		for file_name in file_names:
 			if self.is_image(file_name):
 				self.images.append(os.path.abspath(os.path.join(file_path, file_name)))
@@ -80,8 +83,6 @@ class train_nyudataset(Dataset):
 				self.masks.append(os.path.abspath(os.path.join(file_path, file_name)))
 			elif os.path.isdir(os.path.join(file_path, file_name)):
 				self.read(os.path.join(file_path, file_name), level=level-1)
-		print(self.masks)
-		print(self.images)
 
 	def __len__(self):
 		return len(self.images)

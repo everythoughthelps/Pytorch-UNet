@@ -23,15 +23,15 @@ gpus = [0]
 
 vis=visdom.Visdom(env='test1')
 vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss', 'acc']))
-def train_net(net,epochs=5,batchsize=5,lr=0.1,save_cp=True,gpu=True):
+def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
     dir = '/data/sync'
     val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
     val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = train_nyudataset(dir,scale=0.5,classes=64)
-    val_dataset = val_nyudataset(val_img_dir,val_mask_dir,classes=64,scale=0.5)
+    train_dataset = train_nyudataset(dir,scale=0.5,classes=classes)
+    val_dataset = val_nyudataset(val_img_dir,val_mask_dir,classes=classes,scale=0.5)
     train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
     test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
@@ -143,13 +143,14 @@ def get_args():
                       default=True, help='use cuda')
     parser.add_option('-c', '--load', dest='load',
                       default=False, help='load file model')#'/home/panmeng/PycharmProjects/pt1.1/unet/checkpoints/CP1.pth'
+    parser.add_option('-C', '--classes', dest='classes',default=64, )
     (options, args) = parser.parse_args()
     return options
 
 if __name__ == '__main__':
     args = get_args()
 
-    net =hopenet(rn.Bottleneck, [3, 4, 6, 3], 64)
+    net =hopenet(rn.Bottleneck, [3, 4, 6, 3], args.classes)
     print(net)
     if args.load:
         net.load_state_dict(torch.load(args.load))
@@ -165,7 +166,8 @@ if __name__ == '__main__':
               epochs=args.epochs,
               batchsize=args.batchsize,
               lr=args.lr,
-              gpu=args.gpu)
+              gpu=args.gpu,
+              classes = args.classes)
 
     try:
         sys.exit(0)
