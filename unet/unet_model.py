@@ -52,10 +52,11 @@ class hopenet(rn.ResNet):
 
 
     def forward(self,x):
+        print(x.size())
         x = self.conv1(x)
+        print(x.size())
         x = self.bn1(x)
         x1 = self.relu(x)
-        print(x1.size())
 
         x2 = self.layer1(x1)
         print(x2.size())

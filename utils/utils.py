@@ -210,4 +210,4 @@ class label_smooth_crossentropy(_Loss):
         return torch.sum(-(torch.log_softmax(input,1).matmul(target)))
 
 if __name__ == '__main__':
-    pass
+    readimg()

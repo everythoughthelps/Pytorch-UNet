@@ -7,9 +7,7 @@ import visdom
 import logging
 import torch
 import torch.nn as nn
-from utils.NYU_dataloader import val_nyudataset
-from utils.NYU_dataloader import train_nyudataset
-from torch.utils.data import DataLoader
+from utils import loaddata
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
 import utils
@@ -28,14 +26,9 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
-    dir = '/data/sync'
-    val_img_dir = '/home/panmeng/data/nyu_images/test_dir/'
-    val_mask_dir = '/home/panmeng/data/nyu_depths/test_dir/'
-    train_dataset = train_nyudataset(dir,scale=0.5,classes=classes)
-    val_dataset = val_nyudataset(val_img_dir,val_mask_dir,classes=classes,scale=0.5)
-    train_dataloader = DataLoader(train_dataset,batch_size=batchsize,shuffle=False)
-    test_dataloader = DataLoader(val_dataset,batch_size=1,shuffle=False)
 
+    train_loader = loaddata.getTrainingData(args)
+    test_loader = loaddata.getTestingData(args)
     print('''
     Starting training:
         Epochs: {}
@@ -44,10 +37,10 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
         Validation size: {}
         Checkpoints: {}
         CUDA: {}
-    '''.format(epochs,lr, len(train_dataset),
-               len(val_dataset), str(save_cp), str(gpu)))
+    '''.format(epochs,lr, len(train_loader),
+               len(test_loader), str(save_cp), str(gpu)))
 
-    N_train = len(train_dataloader)
+    N_train = len(train_loader)
     optimizer = optim.SGD(net.parameters(),
                           lr=lr,
                           momentum=0.9,
@@ -68,12 +61,14 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
 
         epoch_loss = 0
         start_time = time.time()
-        for i, b in enumerate(train_dataloader):
+        for i, b in enumerate(train_loader):
 
-            imgs = b[0]
+            imgs = b['image']
             imgs = imgs.float()
-            mask_sparse = b[1]
+            print(imgs.size())
+            mask_sparse = b['label']
             mask_sparse = mask_sparse.float()
+            print(mask_sparse.size())
 
 
             imgs = imgs.cuda()
@@ -114,7 +109,7 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
 
         del mask_sparse,masks_prob,imgs,masks_pred
 
-        val_rmse= eval_net(net, test_dataloader,epoch,classes,gpu=True)
+        val_rmse= eval_net(net, test_loader,epoch,classes,args,gpu=True)
         print('Validation RMSE: {}'.format(val_rmse))
 
         with open('val_log.txt','a') as f:
@@ -136,25 +131,24 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
 
 def get_args():
     parser = OptionParser()
-    parser.add_option('-e', '--epochs', dest='epochs', default=2000, type='int',
+    parser.add_option('--epochs', dest='epochs', default=50, type='int',
                       help='number of epochs')
-    parser.add_option('-b', '--batch-size', dest='batchsize', default=1,
-                      type='int', help='batch size')
-    parser.add_option('-r', '--learning-rate', dest='lr', default=0.1,
-                      type='float', help='learning rate')
+    parser.add_option('--e', default=0.01, type=float, help='avoid log0')
+    parser.add_option('--batch_size',  default=1,type='int', help='batch size')
+    parser.add_option('-r', '--learning-rate', dest='lr', default=0.1,type='float', help='learning rate')
+    parser.add_option('--data', default='/data/nyuv2/', type=str, help='path of dataset')
     parser.add_option('-g', '--gpu', action='store_true', dest='gpu',
                       default=True, help='use cuda')
     parser.add_option('-l', '--load', dest='load',
                       default=False, help='load file model')#'/home/panmeng/PycharmProjects/pt1.1/unet/checkpoints/CP1.pth'
-    parser.add_option('-c', '--classes', dest='classes',default=64)
+    parser.add_option('--num_classes', default=120)
     (options, args) = parser.parse_args()
     return options
 
 if __name__ == '__main__':
     args = get_args()
 
-    net =hopenet(rn.Bottleneck, [3, 4, 6, 3],args.classes)
-    print(net)
+    net =hopenet(rn.Bottleneck, [3, 4, 6, 3],args.num_classes)
     if args.load:
         net.load_state_dict(torch.load(args.load))
         print('Model loaded from {}'.format(args.load))
@@ -167,9 +161,9 @@ if __name__ == '__main__':
 
     train_net(net=net,
               epochs=args.epochs,
-              batchsize=args.batchsize,
+              batchsize=args.batch_size,
               lr=args.lr,
-              classes=args.classes,
+              classes=args.num_classes,
               gpu=args.gpu)
 
     try:
