@@ -22,7 +22,7 @@ gpus = [0]
 
 vis=visdom.Visdom(env='test1')
 vis.line([[0.,0.]], [0], win='train', opts=dict(title='loss&acc', legend=['loss', 'acc']))
-def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
+def train_net(net,epochs,lr,classes,save_cp=True,gpu=True,):
 
     dir_checkpoint = 'checkpoints/'
     global i, mask_sparse, imgs, depth, best_val_rmse, masks_prob, masks_pred
@@ -45,7 +45,7 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
                           lr=lr,
                           momentum=0.9,
                           weight_decay=0.0005)
-    scheduler = MultiStepLR(optimizer,[80,1000,1500],gamma=0.1)
+    scheduler = MultiStepLR(optimizer,[10,25],gamma=0.1)
     criterion = nn.CrossEntropyLoss()
     criterion2 = nn.MSELoss()
     x_list = []
@@ -84,8 +84,7 @@ def train_net(net,epochs,batchsize,lr,classes,save_cp=True,gpu=True,):
             #depth = depth.unsqueeze(2)
 
             #masks_pred = torch.mul(out_mse,depth.cuda())
-            masks_prob = torch.softmax(out,dim=1)
-            _,masks_pred = torch.max(masks_prob,dim=1)
+            _,masks_pred = torch.max(out,dim=1)
             loss_mse = criterion2(masks_pred.float(), mask_sparse.float())
             loss = loss_mse + loss_crossentropy
             epoch_loss += loss.item()
@@ -161,7 +160,6 @@ if __name__ == '__main__':
 
     train_net(net=net,
               epochs=args.epochs,
-              batchsize=args.batch_size,
               lr=args.lr,
               classes=args.num_classes,
               gpu=args.gpu)

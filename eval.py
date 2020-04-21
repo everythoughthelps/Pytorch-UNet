@@ -62,12 +62,12 @@ def eval_net(net, dataset, epoch, classes,args,gpu=True):
             #_,mask_pred_sparse = mask_prob.max(dim=1)
             #mask_pred_sparse = mask_pred_sparse * (256//classes)
             mask_pred_sparse = soft_sum(mask_prob,args)
-            results_imgs = ToPILImage()(mask_pred_sparse.float().cpu() / 10)
+            results_imgs = ToPILImage()(mask_pred_sparse.squeeze().float().cpu() / 10)
             if not os.path.exists('results'):
                 os.mkdir('results')
             if not os.path.exists('results/' + str(epoch) + 'epochs_results'):
                 os.mkdir('results/' + str(epoch) + 'epochs_results')
-            results_imgs.save(os.getcwd() +'/results/' + str(epoch) + 'epochs_results/' + str(m['images_name']).strip('(),\''))
+            results_imgs.save(os.getcwd() +'/results/' + str(epoch) + 'epochs_results/' + str(m['image_name']).strip(str(['data/nyu2_test/.png']))+'.png')
             break
     return val_rmse
 
