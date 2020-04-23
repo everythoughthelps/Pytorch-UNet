@@ -84,9 +84,7 @@ def train_net(net,epochs,lr,classes,save_cp=True,gpu=True,):
             #depth = depth.unsqueeze(2)
 
             #masks_pred = torch.mul(out_mse,depth.cuda())
-            _,masks_pred = torch.max(out,dim=1)
-            loss_mse = criterion2(masks_pred.float(), mask_sparse.float())
-            loss = loss_mse + loss_crossentropy
+            loss = loss_crossentropy
             epoch_loss += loss.item()
 
             print('{0:.4f} --- loss: {1:.6f}'.format(i / N_train, loss.item()))
@@ -106,7 +104,6 @@ def train_net(net,epochs,lr,classes,save_cp=True,gpu=True,):
         x_list.append(epoch)
         y_crossentropy_list.append(str(epoch_loss/(i+1))+'\n')
 
-        del mask_sparse,masks_prob,imgs,masks_pred
 
         val_rmse= eval_net(net, test_loader,epoch,classes,args,gpu=True)
         print('Validation RMSE: {}'.format(val_rmse))
