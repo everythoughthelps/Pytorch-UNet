@@ -23,9 +23,9 @@ def eval_net(net, dataset, epoch, classes,args,gpu=True):
         #depth = depth.unsqueeze(2)
         #depth = depth.unsqueeze(2)
 
-        #mask_prob = F.softmax(out, dim=1)
+        mask_prob = F.softmax(out, dim=1)
         #_,mask_pred_sparse = mask_prob.max(dim=1)
-        mask_pred_sparse = soft_sum(out,args)
+        mask_pred_sparse = soft_sum(mask_prob,args)
         #true_mask = true_mask * (256//classes)
 
         loss = nn.MSELoss()

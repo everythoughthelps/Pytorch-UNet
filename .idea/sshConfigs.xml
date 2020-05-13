@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="192.168.1.213" id="b776bc2b-f2f3-4e9b-9f18-6345f08d3c30" port="22" customName="wsco" nameFormat="CUSTOM" username="wsco" />
+      <sshConfig authType="PASSWORD" host="192.168.1.213" id="ad83eae5-aa37-4c91-9440-fb3789e3ce27" port="22" customName="wsco" nameFormat="CUSTOM" username="wsco" />
+    </configs>
+  </component>
+</project>

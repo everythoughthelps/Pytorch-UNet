@@ -55,7 +55,7 @@ def getTrainingData(args):
                         'std': [0.229, 0.224, 0.225]}
 
     transformed_training = depthDataset(args,
-                                        csv_file='data/nyu2_train.csv',
+                                        csv_file='data/10nyu2_train.csv',
                                         transform=transforms.Compose([
                                             Scale(240),
                                             RandomHorizontalFlip(),
