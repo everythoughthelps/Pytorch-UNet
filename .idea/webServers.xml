@@ -2,12 +2,11 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="3ce5809a-d46d-4397-aaa6-d8c4d43990b9" name="wsco" url="http://192.168.1.213">
-        <fileTransfer host="192.168.1.213" port="22" accessType="SFTP">
+      <webServer id="888870ea-c657-4d23-86bc-2df94d943650" name="173">
+        <fileTransfer accessType="SFTP" host="172.18.242.173" port="22" sshConfigId="ad83eae5-aa37-4c91-9440-fb3789e3ce27" sshConfig="wsco">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
-          <option name="port" value="22" />
         </fileTransfer>
       </webServer>
     </option>
